@@ -4,9 +4,11 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from models.usuarios import Usuarios, Session
-import datetime
+from datetime import datetime
+from flask_bcrypt import Bcrypt
 
 app = Flask(__name__)
+bcrypt = Bcrypt(app)
 CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 
 @app.route('/', methods=['GET'])
@@ -21,23 +23,27 @@ def user():
 def login():
     data = request.get_json()
     email = data.get('email')
-    senha = data.get('senha')
+    senha_digitada = data.get('senha')
     
     session = Session()
     
-    usuario = session.query(Usuarios).filter_by(email=email, senha=senha).first()
-    
-    session.close()
-    
-    if usuario and usuario.senha == senha:
-        session = Session()
-        ultimo_login = datetime.datetime.now()
-        usuario.ultimo_login = ultimo_login
-        session.commit()
-        session.close()
+    usuario = session.query(Usuarios).filter_by(email=email).first()
+        
+    if usuario and bcrypt.check_password_hash(usuario.senha, senha_digitada):
+        usuario.ultimo_login = datetime.now()
+        
+        login_data = usuario.ultimo_login
+        try:
+            session.commit()
+            session.close()
+        except:
+            session.rollback()
+            session.close()
+            
+        
         return jsonify({
             'mensagem': 'Login bem-sucedido',
-            "login_data": usuario.ultimo_login,
+            "login_data": login_data,
             "logado":True
             }), 200
     else:
@@ -61,16 +67,17 @@ def cadastro():
         }), 400
         
     
+    senha_hash = bcrypt.generate_password_hash(senha).decode('utf-8')
     
     session = Session()
     
     novo_usuario = Usuarios(
         nome=nome,
         email=email,
-        senha=senha,
+        senha=senha_hash,
         celular=celular,
-        data_cadastro=datetime.datetime.now(),
-        ultimo_login=datetime.datetime.now()  
+        data_cadastro=datetime.now(),
+        ultimo_login=datetime.now()  
     )
     
     session.add(novo_usuario)
