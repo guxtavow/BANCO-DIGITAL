@@ -28,6 +28,25 @@ def login():
     session = Session()
     
     usuario = session.query(Usuarios).filter_by(email=email).first()
+    
+    if usuario and bcrypt.check_password_hash(usuario.senha, senha_digitada) == None:
+        return jsonify({
+            "logado":False,
+            'mensagem': 'Preencha todos os campos necessários!'
+            }), 401
+        
+    elif usuario == None:
+        return jsonify({
+            "logado":False,
+            'mensagem': 'Preencha o email!'
+            }), 401
+        
+    elif bcrypt.check_password_hash(usuario.senha, senha_digitada) == None:
+        return jsonify({
+            "logado":False,
+            'mensagem': 'Preencha a senha!'
+            }), 401
+        
         
     if usuario and bcrypt.check_password_hash(usuario.senha, senha_digitada):
         usuario.ultimo_login = datetime.now()
@@ -42,14 +61,14 @@ def login():
             
         
         return jsonify({
-            'mensagem': 'Login bem-sucedido',
+            'mensagem': 'Login bem-sucedido!',
             "login_data": login_data,
             "logado":True
             }), 200
     else:
         return jsonify({
             "logado":False,
-            'mensagem': 'Usuario ou senha inválida'
+            'mensagem': 'Email ou senha incorretos!'
             }), 401
         
 @app.route('/cadastro', methods=['POST'])

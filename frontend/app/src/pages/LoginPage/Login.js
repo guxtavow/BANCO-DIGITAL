@@ -7,11 +7,13 @@ import CadastroAPI from '../../services/cadastroForm'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons'
 
+
 export default function Login() {
     const [loginEmail, setLoginEmail] = useState("")
     const [loginSenha, setLoginSenha] = useState("")
     const [error, setError] = useState("")
-    const [exibirSenha, setExibirSenha] = useState(false) //mostrar ou n mostrar senha
+    const [success, setSuccess] = useState("")
+    const [exibirSenha, setExibirSenha] = useState(false) //mostrar ou não digitar senha
     const [Cadastro, setCadastro] = useState(false)
     const [formData, setFormData] = useState({
         nome: '',
@@ -26,21 +28,21 @@ export default function Login() {
     const LoginUsuario = async (e) => {
         e.preventDefault()
         setLoading(true)
-
+        if(loginEmail === '' || loginSenha === '') {
+            setLoading(false)
+            setError('Todos os campos devem ser preenchidos!')
+        }
         try {
             const response = await loginAPI(loginEmail, loginSenha)
             console.log(response)
             if (response.logado === true) {
-                setTimeout(() => {
-                    setLoading(false)    
-                }, 2000)
-                alert(response.mensagem)
+                setLoading(false)    
+                setSuccess(response.mensagem)
                 //localStorage.setItem("logado","true")
             }else{
-                setTimeout(() => {
-                    setLoading(false)    
-                }, 2000)
-                setError("Email ou senha incorretos");
+                setLoading(false)    
+                setError("Email ou senha incorretos!")
+                response.logado = false
             }
             
         } catch (err) {
@@ -67,23 +69,24 @@ export default function Login() {
             setError('A senha deve ter pelo menos 8 caracteres')
         }
         if (formData.senha !== formData.confirmar_senha) {
-            alert('As senhas não coincidem')
+            setError('As senhas não coincidem')
             return
         }
         try {
             const response = await CadastroAPI(formData)
-            alert(response.mensagem)
+            setSuccess(response.mensagem)
         } catch (err) {
-            alert(err.message)
+            setSuccess(err.message)
         }
     }
 
     return (
         <div className="loginPage">
             <div className="loginContainer">
-                <img src={LogoHeader} alt="Logo Bytebank" />
+                <img src={LogoHeader} alt="Logo Bytebank Sidebar" />
                 <div className="loginForm">
                     {Cadastro ? (
+                        /* -------------------------------- CADASTRO -------------------------------- */
                         <div className='cadastroForm'>
                             <form onSubmit={CadastroUsuario}>
                                 <section className="userplaceholder">
@@ -113,28 +116,30 @@ export default function Login() {
                             </form>
                         </div>
                     ) : (
+                        /* ---------------------------------- LOGIN --------------------------------- */
                         <div>
                             {loading ?                             
                             <>
-                                <img src={LogoPicture} alt="Logo Bytebank" style={{ width: 100 }} /><br />
+                                <img src={LogoPicture} alt="Logo_Bytebank" style={{ width: 100 }} /><br />
                                 <div className="spinner-grow text-primary" role="status" style={{ width: '3rem', height: '3rem', margin:'20px' }}>
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
                             </>
                             :
                             <>
-                                <img src={LogoPicture} alt="Logo Bytebank" style={{ width: 100 }} />
+                                <img src={LogoPicture} alt="Logo_Bytebank" style={{ width: 100 }} />
                                 <form onSubmit={LoginUsuario}>
                                     <section className="userplaceholder">
-                                        Email <input type="text" placeholder="Digite aqui seu nome de usuário" name="email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)}/>
+                                        Email <input type="text" placeholder="Digite aqui seu email de usuário" name="email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)}/>
                                     </section>
                                     <section className="userplaceholder">
                                         Senha <input type={exibirSenha ? "password" : "text"} placeholder="Digite aqui sua Senha" name="senha" value={loginSenha} onChange={(e) => setLoginSenha(e.target.value)} /> 
                                         <FontAwesomeIcon 
-                                        icon={exibirSenha ? faEye : faEyeSlash} onClick={mudarExibirSenha} 
+                                        icon={exibirSenha ? faEyeSlash : faEye} onClick={mudarExibirSenha} 
                                         style={{ cursor: 'pointer', display:'inline-flex',justifyContent:'center', alignItems:'center', fontSize:'1rem' }}
                                         />
                                     </section>
+                                    {success && <p style={{ color: 'green', width:'auto'}}>{success}</p>}
                                     {error && <p style={{ color: 'red', width:'auto'}}>{error}</p>}
                                     <button className='botaologin' type="submit">Entrar</button>
                                     <button className='botaologin' type="button" onClick={() => setCadastro(true)}>Cadastrar</button>
