@@ -59,7 +59,6 @@ def login():
             session.rollback()
             session.close()
             
-        
         return jsonify({
             'mensagem': 'Login bem-sucedido!',
             "login_data": login_data,
@@ -80,15 +79,37 @@ def cadastro():
     confirmar_senha = data.get("confirmar_senha")
     celular = data.get("celular")
     
-    if senha != confirmar_senha:
+    session = Session()
+
+    email_check = session.query(Usuarios).filter_by(email=email).first()
+
+    if nome == '' or email == '' or senha == '' or confirmar_senha == '' or celular == '':
+        return jsonify({
+            "mensagem": "Todos os campos devem ser preenchidos"
+        }), 400
+    elif len(senha) < 8:
+        return jsonify({
+            "mensagem": "A senha deve ter pelo menos 8 caracteres"
+        }), 400
+    elif senha != confirmar_senha:
         return jsonify({
             "mensagem": "As senhas não coincidem"
+        }), 400    
+    elif '@' not in email or '.com' not in email:
+        return jsonify({
+            "mensagem": "Digite um email valido"
+        }), 400
+    elif len(celular) < 11:
+        return jsonify({
+            "mensagem": "Digite um celular valido"
+        }), 400
+    elif email_check != None:
+        return jsonify({
+            "mensagem": "Email ja cadastrado"
         }), 400
         
-    
     senha_hash = bcrypt.generate_password_hash(senha).decode('utf-8')
     
-    session = Session()
     
     novo_usuario = Usuarios(
         nome=nome,
@@ -98,14 +119,15 @@ def cadastro():
         data_cadastro=datetime.now(),
         ultimo_login=datetime.now()  
     )
-    
+
     session.add(novo_usuario)
     session.commit()
     session.close()
-    
+    session.close()
+        
     return jsonify({
         "mensagem": "Cadastro realizado com sucesso"
-    })
+    }),200
 
 if __name__ == '__main__':
     app.run(debug=True)

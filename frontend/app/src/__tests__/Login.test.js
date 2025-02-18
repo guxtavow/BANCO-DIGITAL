@@ -4,7 +4,7 @@ import LoginAPI from '../services/loginForm'
 
 jest.mock('../services/loginForm', () => jest.fn()) //declare a mock function OBS: always out of describe
 
-describe('Test Login component', () => {
+describe('Test Login page', () => {
     it('Render itens', () => {
         render(<Login />)
         const logo = screen.getByAltText("Logo Bytebank Sidebar") //aside logo on page

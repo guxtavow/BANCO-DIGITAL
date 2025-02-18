@@ -15,7 +15,7 @@
     color: rgb(219, 212, 212);
     background-color: transparent;
     min-height: 40vh;
-    max-height: 60vh;
+    max-height: auto;
     min-width: 30vw;
     max-width: 40vw;
     display: flex;

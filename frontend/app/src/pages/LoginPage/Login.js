@@ -31,6 +31,7 @@ export default function Login() {
         if(loginEmail === '' || loginSenha === '') {
             setLoading(false)
             setError('Todos os campos devem ser preenchidos!')
+            setSuccess('')
         }
         try {
             const response = await loginAPI(loginEmail, loginSenha)
@@ -42,6 +43,7 @@ export default function Login() {
             }else{
                 setLoading(false)    
                 setError("Email ou senha incorretos!")
+                setSuccess('')
                 response.logado = false
             }
             
@@ -63,20 +65,33 @@ export default function Login() {
     const CadastroUsuario = async (e) => {
         e.preventDefault()
         if(formData.nome === '' || formData.email === '' || formData.senha === '' || formData.confirmar_senha === '' || formData.celular === '') {
-            setError('Todos os campos devem ser preenchidos')            
+            setError('Todos os campos devem ser preenchidos')  
+            setSuccess('')          
         }
-        if (formData.senha.length <= 8) {
+        else if(formData.senha.length < 8) {
             setError('A senha deve ter pelo menos 8 caracteres')
+            setSuccess('')
         }
-        if (formData.senha !== formData.confirmar_senha) {
+        else if (formData.senha !== formData.confirmar_senha) {
             setError('As senhas não coincidem')
-            return
+            setSuccess('')
         }
+        else if(formData.email.includes('@') || formData.email.includes('.com')  === false) {
+            setError('Digite um email valido')
+            setSuccess('')
+        }
+        else if(formData.celular.length < 11) {
+            setError('Digite um celular valido')
+            setSuccess('')
+        }
+
         try {
             const response = await CadastroAPI(formData)
+            console.log(response)
             setSuccess(response.mensagem)
-        } catch (err) {
-            setSuccess(err.message)
+            setError('')
+        } catch{
+            setSuccess('')
         }
     }
 
@@ -88,6 +103,7 @@ export default function Login() {
                     {Cadastro ? (
                         /* -------------------------------- CADASTRO -------------------------------- */
                         <div className='cadastroForm'>
+                            <img src={LogoPicture} alt="Logo_Bytebank" style={{ width: 100 }} /><br />
                             <form onSubmit={CadastroUsuario}>
                                 <section className="userplaceholder">
                                     Nome <input type="text" placeholder="Digite seu nome completo" name="nome" value={formData.nome} onChange={handleChange} />
@@ -111,6 +127,8 @@ export default function Login() {
                                 <section className="userplaceholder">
                                     Celular <input type="text" placeholder="Digite aqui seu Celular" name="celular" value={formData.celular} onChange={handleChange} />
                                 </section>
+                                {success && <p style={{ color: 'green', width:'auto'}}>{success}</p>}
+                                {error && <p style={{ color: 'red', width:'auto'}}>{error}</p>}
                                 <button className='botaologin' type="button" onClick={() => setCadastro(false)}>Voltar ao Login</button>
                                 <button className='botaologin' type="submit">Cadastrar</button>
                             </form>
