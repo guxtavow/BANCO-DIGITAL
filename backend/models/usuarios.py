@@ -1,11 +1,13 @@
-from sqlalchemy import create_engine, Column, Integer, String, func, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-
+from datetime import datetime
+from flask_bcrypt import Bcrypt
 
 DATABASE_URL = "postgresql://postgres:gusta@localhost:5432/postgres"
 engine = create_engine(DATABASE_URL)
 Base = declarative_base()
+Session = sessionmaker(bind=engine)
 
 class Usuarios(Base):
     __tablename__ = 'usuario'
@@ -28,5 +30,21 @@ class Usuarios(Base):
             "DATACADASTRO": self.data_cadastro,
             "ULTIMOLOGIN": self.ultimo_login
         }
+    
+    
+    @classmethod
+    def criar_usuarios(cls, session, nome, email, senha, celular, bcrypt):
+        senha_hash = bcrypt.generate_password_hash(senha).decode('utf-8')
+        novo_usuario = cls(
+            nome=nome,
+            email=email,
+            senha=senha_hash,
+            celular=celular,
+            data_cadastro=datetime.now(),
+            ultimo_login=datetime.now()  
+        )
+
+        session.add(novo_usuario)
+        session.commit()
+        return novo_usuario        
         
-Session = sessionmaker(bind=engine)

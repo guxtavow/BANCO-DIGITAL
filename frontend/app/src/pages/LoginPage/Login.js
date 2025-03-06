@@ -28,11 +28,6 @@ export default function Login() {
     const LoginUsuario = async (e) => {
         e.preventDefault()
         setLoading(true)
-        if(loginEmail === '' || loginSenha === '') {
-            setLoading(false)
-            setError('Todos os campos devem ser preenchidos!')
-            setSuccess('')
-        }
         try {
             const response = await loginAPI(loginEmail, loginSenha)
             console.log(response)
@@ -40,15 +35,12 @@ export default function Login() {
                 setLoading(false)    
                 setSuccess(response.mensagem)
                 //localStorage.setItem("logado","true")
-            }else{
-                setLoading(false)    
-                setError("Email ou senha incorretos!")
-                setSuccess('')
-                response.logado = false
             }
             
         } catch (err) {
+            setLoading(false)
             setError(err.message)
+            setSuccess('')
         }
     }
 
@@ -64,33 +56,14 @@ export default function Login() {
 
     const CadastroUsuario = async (e) => {
         e.preventDefault()
-        if(formData.nome === '' || formData.email === '' || formData.senha === '' || formData.confirmar_senha === '' || formData.celular === '') {
-            setError('Todos os campos devem ser preenchidos')  
-            setSuccess('')          
-        }
-        else if(formData.senha.length < 8) {
-            setError('A senha deve ter pelo menos 8 caracteres')
-            setSuccess('')
-        }
-        else if (formData.senha !== formData.confirmar_senha) {
-            setError('As senhas não coincidem')
-            setSuccess('')
-        }
-        else if(formData.email.includes('@') || formData.email.includes('.com')  === false) {
-            setError('Digite um email valido')
-            setSuccess('')
-        }
-        else if(formData.celular.length < 11) {
-            setError('Digite um celular valido')
-            setSuccess('')
-        }
-
         try {
             const response = await CadastroAPI(formData)
             console.log(response)
             setSuccess(response.mensagem)
             setError('')
-        } catch{
+        } catch(err){
+            console.log(err)
+            setError(err.message)
             setSuccess('')
         }
     }
@@ -127,6 +100,7 @@ export default function Login() {
                                 <section className="userplaceholder">
                                     Celular <input type="text" placeholder="Digite aqui seu Celular" name="celular" value={formData.celular} onChange={handleChange} />
                                 </section>
+                                {console.log(error)}
                                 {success && <p style={{ color: 'green', width:'auto'}}>{success}</p>}
                                 {error && <p style={{ color: 'red', width:'auto'}}>{error}</p>}
                                 <button className='botaologin' type="button" onClick={() => setCadastro(false)}>Voltar ao Login</button>

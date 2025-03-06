@@ -9,8 +9,9 @@ export default async function CadastroAPI(usuario) {
 
     const data = await response.json() 
 
-    if(!response.ok) {
-        throw new Error(data.error || 'Não foi possível realizar o cadastro')
+    if (!response.ok) {
+        const errorMessage = data.mensagem || (data[0] && data[0].mensagem) || "Erro desconhecido"
+        throw new Error(errorMessage)
     }
 
     return data

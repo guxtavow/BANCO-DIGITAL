@@ -6,6 +6,7 @@ from sqlalchemy import create_engine
 from models.usuarios import Usuarios, Session
 from datetime import datetime
 from flask_bcrypt import Bcrypt
+from functions.verify import VerifyCadastro, VerifyLogin
 
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
@@ -29,26 +30,11 @@ def login():
     
     usuario = session.query(Usuarios).filter_by(email=email).first()
     
-    if usuario and bcrypt.check_password_hash(usuario.senha, senha_digitada) == None:
-        return jsonify({
-            "logado":False,
-            'mensagem': 'Preencha todos os campos necessários!'
-            }), 401
-        
-    elif usuario == None:
-        return jsonify({
-            "logado":False,
-            'mensagem': 'Preencha o email!'
-            }), 401
-        
-    elif bcrypt.check_password_hash(usuario.senha, senha_digitada) == None:
-        return jsonify({
-            "logado":False,
-            'mensagem': 'Preencha a senha!'
-            }), 401
-        
-        
+    error_response = VerifyLogin(email, senha_digitada)
+            
+    
     if usuario and bcrypt.check_password_hash(usuario.senha, senha_digitada):
+        # ----------------------------- datetime atualizing ---------------------------- #
         usuario.ultimo_login = datetime.now()
         
         login_data = usuario.ultimo_login
@@ -58,17 +44,23 @@ def login():
         except:
             session.rollback()
             session.close()
-            
+        # ----------------------------- datetime atualizing ---------------------------- #
+
         return jsonify({
             'mensagem': 'Login bem-sucedido!',
             "login_data": login_data,
             "logado":True
             }), 200
     else:
-        return jsonify({
-            "logado":False,
-            'mensagem': 'Email ou senha incorretos!'
-            }), 401
+        if error_response:
+            session.close()
+            return jsonify(error_response),400
+        else:
+            session.close()
+            return jsonify({
+                "logado":False,
+                'mensagem': 'Email ou senha incorretos!'
+                }), 401
         
 @app.route('/cadastro', methods=['POST'])
 def cadastro():
@@ -82,52 +74,19 @@ def cadastro():
     session = Session()
 
     email_check = session.query(Usuarios).filter_by(email=email).first()
-
-    if nome == '' or email == '' or senha == '' or confirmar_senha == '' or celular == '':
-        return jsonify({
-            "mensagem": "Todos os campos devem ser preenchidos"
-        }), 400
-    elif len(senha) < 8:
-        return jsonify({
-            "mensagem": "A senha deve ter pelo menos 8 caracteres"
-        }), 400
-    elif senha != confirmar_senha:
-        return jsonify({
-            "mensagem": "As senhas não coincidem"
-        }), 400    
-    elif '@' not in email or '.com' not in email:
-        return jsonify({
-            "mensagem": "Digite um email valido"
-        }), 400
-    elif len(celular) < 11:
-        return jsonify({
-            "mensagem": "Digite um celular valido"
-        }), 400
-    elif email_check != None:
-        return jsonify({
-            "mensagem": "Email ja cadastrado"
-        }), 400
-        
-    senha_hash = bcrypt.generate_password_hash(senha).decode('utf-8')
     
+    error_response = VerifyCadastro(nome, email, senha, confirmar_senha, celular, email_check) #Verify required fields
     
-    novo_usuario = Usuarios(
-        nome=nome,
-        email=email,
-        senha=senha_hash,
-        celular=celular,
-        data_cadastro=datetime.now(),
-        ultimo_login=datetime.now()  
-    )
-
-    session.add(novo_usuario)
-    session.commit()
-    session.close()
-    session.close()
-        
-    return jsonify({
-        "mensagem": "Cadastro realizado com sucesso"
-    }),200
+    if error_response:
+        session.close()
+        return jsonify(error_response),400
+    else:
+        Usuarios.criar_usuarios(session, nome, email, senha, celular, bcrypt)
+        session.close()
+            
+        return jsonify({
+            "mensagem": "Cadastro realizado com sucesso"
+        }),200
 
 if __name__ == '__main__':
     app.run(debug=True)

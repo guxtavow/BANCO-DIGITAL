@@ -8,6 +8,11 @@ export default async function LoginAPI(email, senha) {
     })
 
     const data = await response.json() 
+    console.log(data)
+    if (!response.ok) {
+        const errorMessage = data.mensagem || (data[0] && data[0].mensagem) || "Erro desconhecido"
+        throw new Error(errorMessage)
+    }
 
     return data
 }
